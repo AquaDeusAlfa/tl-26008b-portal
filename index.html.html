@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Навчальний портал ТЛ-26008Б</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 text-slate-800 min-h-screen flex flex-col antialiased">
+    <!-- Шапка сайту -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3.5">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white p-2.5 rounded-2xl shadow-md shadow-blue-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">Навчальний портал <span class="text-blue-600">ТЛ-26008Б</span></h1>
+                    <p id="live-datetime" class="text-xs text-slate-500 font-medium">Завантаження...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <button id="admin-panel-btn" onclick="openAdminPanel()" class="hidden px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm cursor-pointer">
+                    🛡️ Адмін-панель
+                </button>
+
+                <div id="user-account-status" class="hidden items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
+                    👤 <span id="current-user-name">Гість</span>
+                    <button onclick="logoutUser()" class="text-xs text-rose-600 hover:underline ml-1 cursor-pointer">Вийти</button>
+                </div>
+                <button id="login-btn-header" onclick="openAuthModal()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm cursor-pointer">
+                    🔑 Увійти / Реєстрація
+                </button>
+                <span id="sync-status" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200/60">⏳ Синхронізація...</span>
+                <span id="week-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60 shadow-xs">Визначення тижня...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Ліва колонка: Розклад, відмічання та сервіси -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Розклад занять -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 bg-blue-50 rounded-xl text-blue-600">📅</span> Розклад занять
+                    </h2>
+                    <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+                        <div id="days-tabs" class="flex flex-wrap gap-1 bg-slate-100/80 p-1 rounded-2xl"></div>
+                        <button id="add-lesson-btn" onclick="checkAdminAndDo(openAddModal)" class="hidden bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-500/20 cursor-pointer flex items-center gap-1.5 active:scale-95">
+                            <span>+ Додати пару</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="schedule-container" class="space-y-3.5"></div>
+            </div>
+
+            <!-- Розділ: Відмічання на парі -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+                    <h3 class="text-md font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 bg-emerald-50 rounded-xl text-emerald-600">✅</span> Відмічання на парі
+                    </h3>
+                    <span class="text-[11px] text-slate-500 font-medium bg-slate-100 px-2.5 py-1 rounded-lg">Доступно лише під час пари (80 хв) • Очищення щонеділі</span>
+                </div>
+                <div id="attendance-section" class="space-y-3"></div>
+            </div>
+
+            <!-- Швидкі сервіси -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 bg-indigo-50 rounded-xl text-indigo-600">🔗</span> Швидкі сервіси
+                    </h3>
+                    <button id="add-service-btn" onclick="checkAdminAndDo(openServiceModal)" class="hidden bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1">
+                        <span>+ Додати сервіс</span>
+                    </button>
+                </div>
+                <div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"></div>
+            </div>
+        </div>
+
+        <!-- Права колонка: Трекер завдань -->
+        <div class="space-y-6">
+            <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 bg-amber-50 rounded-xl text-amber-600">📝</span> Домашні завдання
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Для авторизованих</span>
+                </div>
+                <form id="task-form" class="space-y-3 mb-5">
+                    <input type="text" id="task-text" placeholder="Наприклад: Звіт з логістики..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-500 transition-all">
+                    <div class="flex gap-2.5">
+                        <input type="date" id="task-date" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-500 transition-all">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm shadow-blue-500/20 cursor-pointer active:scale-95 shrink-0">Додати</button>
+                    </div>
+                </form>
+                <div id="tasks-list" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- АДМІН-ПАНЕЛЬ -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">🛡️ Адмін-панель порталу</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Керування правами користувачів та базою групи</p>
+                </div>
+                <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-slate-600 font-bold text-xl cursor-pointer px-2">×</button>
+            </div>
+            <div class="py-4 overflow-y-auto flex-grow space-y-5">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/70 flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">Очистити всі списки відвідуваності</h4>
+                        <p class="text-[11px] text-slate-500">Видалить усі відмітки на парах за поточний тиждень</p>
+                    </div>
+                    <button onclick="adminClearAttendance()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+                        🗑️ Очистити списки
+                    </button>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-bold text-slate-800">👥 Зареєстровані користувачі</h4>
+                        <button onclick="loadUsersForAdmin()" class="text-xs text-blue-600 hover:underline font-semibold cursor-pointer">🔄 Оновити список</button>
+                    </div>
+                    <div id="admin-users-list" class="space-y-2.5">
+                        <p class="text-xs text-slate-400 text-center py-4">Завантаження користувачів...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-end">
+                <button onclick="closeAdminPanel()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl text-xs font-bold cursor-pointer">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно Авторизації / Реєстрації -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="auth-modal-title" class="text-lg font-extrabold text-slate-900">🔐 Вхід в систему</h3>
+                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">×</button>
+            </div>
+            <form id="login-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Нікнейм</label>
+                    <input type="text" id="login-nickname" placeholder="Ваш нікнейм..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Пароль</label>
+                    <input type="password" id="login-password" placeholder="Пароль..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="remember-me" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4">
+                    <label for="remember-me" class="text-xs font-bold text-slate-600 cursor-pointer select-none">Запам'ятати мене</label>
+                </div>
+                <p id="login-error" class="text-xs text-rose-600 font-semibold hidden">Неправильний нікнейм або пароль!</p>
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm cursor-pointer">Увійти</button>
+                    <button type="button" onclick="switchToRegister()" class="text-xs text-blue-600 hover:underline text-center font-semibold cursor-pointer">Ще немає акаунта? Зареєструватися</button>
+                </div>
+            </form>
+            <form id="register-form" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Прізвище</label>
+                    <input type="text" id="reg-lastname" placeholder="Ваше прізвище..." required class="w-full text-sm px-3.5 py-2 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Ім'я</label>
+                    <input type="text" id="reg-firstname" placeholder="Ваше ім'я..." required class="w-full text-sm px-3.5 py-2 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Нікнейм</label>
+                    <input type="text" id="reg-nickname" placeholder="Унікальний нікнейм..." required class="w-full text-sm px-3.5 py-2 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Пароль</label>
+                    <input type="password" id="reg-password" placeholder="Створіть пароль..." required class="w-full text-sm px-3.5 py-2 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <p id="reg-error" class="text-xs text-rose-600 font-semibold hidden">Такий нікнейм вже зайнятий!</p>
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm cursor-pointer">Створити акаунт</button>
+                    <button type="button" onclick="switchToLogin()" class="text-xs text-blue-600 hover:underline text-center font-semibold cursor-pointer">Вже є акаунт? Увійти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для неавторизованих -->
+    <div id="manual-attendance-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <h3 class="text-lg font-extrabold text-slate-900 mb-2">✍️ Відмітка на парі</h3>
+            <p class="text-xs text-slate-500 mb-4">Ви не увійшли в акаунт. Введіть свої дані вручну:</p>
+            <form id="manual-attendance-form" class="space-y-3">
+                <input type="hidden" id="manual-lesson-id">
+                <input type="hidden" id="manual-day-idx">
+                <input type="hidden" id="manual-lesson-idx">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Прізвище</label>
+                    <input type="text" id="manual-lastname" placeholder="Прізвище..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Ім'я</label>
+                    <input type="text" id="manual-firstname" placeholder="Ім'я..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeManualModal()" class="px-4 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Скасувати</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold cursor-pointer">Відмітитися</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно списку присутніх -->
+    <div id="attendance-list-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <h3 id="attendance-modal-title" class="text-lg font-extrabold text-slate-900 mb-2">📋 Список присутніх</h3>
+            <p id="attendance-modal-subtitle" class="text-xs text-slate-500 mb-4">Предмет</p>
+            <div id="attendance-names-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-1 mb-4"></div>
+            <div class="flex justify-end">
+                <button onclick="closeAttendanceListModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl text-xs font-bold cursor-pointer">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Інформаційне вікно -->
+    <div id="info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+            <p id="info-modal-text" class="text-sm font-bold text-slate-800 mb-4"></p>
+            <button onclick="closeInfoModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold cursor-pointer">Зрозуміло</button>
+        </div>
+    </div>
+
+    <!-- Вікно підтвердження -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <h3 class="text-lg font-extrabold text-slate-900 mb-2">🗑️ Підтвердження</h3>
+            <p id="confirm-text" class="text-xs text-slate-600 mb-5">Ви дійсно хочете видалити цей елемент?</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeConfirmModal()" class="px-4 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Скасувати</button>
+                <button type="button" id="confirm-yes-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-bold cursor-pointer">Видалити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно пари -->
+    <div id="lesson-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100">
+            <h3 id="modal-title" class="text-lg font-extrabold text-slate-900 mb-5">Додати пару</h3>
+            <form id="lesson-form" class="space-y-4">
+                <input type="hidden" id="edit-index">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">День тижня</label>
+                    <select id="lesson-day" class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500 font-medium">
+                        <option value="1">Понеділок</option><option value="2">Вівторок</option><option value="3">Середа</option><option value="4">Четвер</option><option value="5">П'ятниця</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Час початку</label>
+                        <input type="text" id="lesson-time" placeholder="8:30" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Тип заняття</label>
+                        <input type="text" id="lesson-type" placeholder="Лекція / Практика" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Назва предмету</label>
+                    <input type="text" id="lesson-name" placeholder="Вища математика" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Викладач</label>
+                        <input type="text" id="lesson-teacher" placeholder="Іванов І.І." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Аудиторія</label>
+                        <input type="text" id="lesson-room" placeholder="202 к.11" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Посилання (Zoom / Meet)</label>
+                    <input type="url" id="lesson-link" placeholder="https://..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex justify-end gap-2.5 pt-3">
+                    <button type="button" onclick="closeAddModal()" class="px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Скасувати</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold cursor-pointer">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно сервісу -->
+    <div id="service-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100">
+            <h3 id="service-modal-title" class="text-lg font-extrabold text-slate-900 mb-5">Додати сервіс</h3>
+            <form id="service-form" class="space-y-4">
+                <input type="hidden" id="service-edit-index">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Назва сервісу</label>
+                    <input type="text" id="service-name" placeholder="Google Classroom" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Опис</label>
+                    <input type="text" id="service-desc" placeholder="Завдання та матеріали" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Іконка (емадзі)</label>
+                    <input type="text" id="service-icon" placeholder="🎓" required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Посилання (URL)</label>
+                    <input type="url" id="service-link" placeholder="https://..." required class="w-full text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex justify-end gap-2.5 pt-3">
+                    <button type="button" onclick="closeServiceModal()" class="px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Скасувати</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold cursor-pointer">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const FIREBASE_DB_URL = "https://tl-26008-default-rtdb.europe-west1.firebasedatabase.app";
+        const LESSON_DURATION_MINUTES = 80;
+        const SUPER_ADMIN_NICK = "Ivan";
+
+        // Відновлення сесії з localStorage (тепер працює стабільно)
+        let currentUser = null;
+        try {
+            const savedUser = localStorage.getItem('tl_current_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+            }
+        } catch (e) {
+            currentUser = null;
+        }
+
+        let pendingAction = null;
+        let confirmCallback = null;
+
+        function hasAdminRights() {
+            if (!currentUser) return false;
+            if (currentUser.nickname === SUPER_ADMIN_NICK) return true;
+            return currentUser.isAdmin === true;
+        }
+
+        function isSuperAdmin() {
+            return currentUser && currentUser.nickname === SUPER_ADMIN_NICK;
+        }
+
+        function showInfoModal(msg) {
+            document.getElementById('info-modal-text').innerText = msg;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+        function closeInfoModal() {
+            document.getElementById('info-modal').classList.add('hidden');
+        }
+
+        function getCurrentWeekId() {
+            const now = new Date();
+            const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+            return `${sunday.getFullYear()}-${sunday.getMonth() + 1}-${sunday.getDate()}`;
+        }
+
+        function getLessonTimeStatus(dayIndex, timeStr) {
+            const now = new Date();
+            const todayDay = now.getDay();
+
+            if (todayDay !== dayIndex) {
+                return todayDay > dayIndex || todayDay === 0 ? 'finished' : 'upcoming';
+            }
+
+            const parts = timeStr.split(':');
+            if (parts.length < 2) return 'active';
+
+            const startHour = parseInt(parts[0], 10);
+            const startMin = parseInt(parts[1], 10);
+
+            const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+            const startTotalMin = startHour * 60 + startMin;
+            const endTotalMin = startTotalMin + LESSON_DURATION_MINUTES;
+
+            if (currentTotalMin < startTotalMin) return 'upcoming';
+            if (currentTotalMin >= startTotalMin && currentTotalMin <= endTotalMin) return 'active';
+            return 'finished';
+        }
+
+        function checkAdminAndDo(actionCallback) {
+            if (!currentUser) {
+                pendingAction = () => {
+                    if (hasAdminRights()) actionCallback();
+                    else showInfoModal("⛔ Редагувати або створювати пари/сервіси може тільки адміністратор (Ivan)!");
+                };
+                openAuthModal();
+                return;
+            }
+            if (!hasAdminRights()) {
+                showInfoModal("⛔ Доступ заборонено! Редагувати або створювати може тільки головний адміністратор (Ivan) або призначені ним адміни.");
+                return;
+            }
+            actionCallback();
+        }
+
+        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); pendingAction = null; }
+
+        function switchToRegister() {
+            document.getElementById('auth-modal-title').innerText = "📝 Реєстрація акаунта";
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        }
+
+        function switchToLogin() {
+            document.getElementById('auth-modal-title').innerText = "🔐 Вхід в систему";
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
+        document.getElementById('register-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const lastname = document.getElementById('reg-lastname').value.trim();
+            const firstname = document.getElementById('reg-firstname').value.trim();
+            const nickname = document.getElementById('reg-nickname').value.trim();
+            const password = document.getElementById('reg-password').value;
+
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/users.json`);
+                const users = await res.json() || {};
+
+                if (users[nickname]) {
+                    document.getElementById('reg-error').classList.remove('hidden');
+                    return;
+                }
+
+                const isOwner = (nickname === SUPER_ADMIN_NICK);
+                const newUser = { lastname, firstname, nickname, password, isAdmin: isOwner };
+
+                await fetch(`${FIREBASE_DB_URL}/users/${nickname}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUser)
+                });
+
+                currentUser = { lastname, firstname, nickname, isAdmin: isOwner };
+                localStorage.setItem('tl_current_user', JSON.stringify(currentUser));
+                renderAll();
+                closeAuthModal();
+
+                if (pendingAction) {
+                    const cb = pendingAction;
+                    pendingAction = null;
+                    cb();
+                }
+            } catch (err) {
+                showInfoModal("Помилка підключення до бази даних!");
+            }
+        };
+
+        document.getElementById('login-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const nickname = document.getElementById('login-nickname').value.trim();
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/users/${nickname}.json`);
+                const user = await res.json();
+
+                if (user && user.password === password) {
+                    const isOwner = (user.nickname === SUPER_ADMIN_NICK);
+                    currentUser = {
+                        lastname: user.lastname,
+                        firstname: user.firstname,
+                        nickname: user.nickname,
+                        isAdmin: isOwner || user.isAdmin === true
+                    };
+
+                    if (rememberMe) {
+                        localStorage.setItem('tl_current_user', JSON.stringify(currentUser));
+                    } else {
+                        // Якщо не хоче запам'ятовувати — все одно зберігаємо під час сеансу
+                        localStorage.setItem('tl_current_user', JSON.stringify(currentUser));
+                    }
+
+                    renderAll();
+                    closeAuthModal();
+                    document.getElementById('login-error').classList.add('hidden');
+
+                    if (pendingAction) {
+                        const cb = pendingAction;
+                        pendingAction = null;
+                        cb();
+                    }
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            } catch (err) {
+                showInfoModal("Помилка підключення до бази даних!");
+            }
+        };
+
+        async function syncCurrentUserRights() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/users/${currentUser.nickname}.json`);
+                const user = await res.json();
+                if (!user) { logoutUser(); return; }
+                const isOwner = (user.nickname === SUPER_ADMIN_NICK);
+                currentUser.isAdmin = isOwner || user.isAdmin === true;
+                currentUser.lastname = user.lastname;
+                currentUser.firstname = user.firstname;
+                localStorage.setItem('tl_current_user', JSON.stringify(currentUser));
+                renderAll();
+            } catch (e) {}
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('tl_current_user');
+            renderAll();
+        }
+
+        function updateUserUI() {
+            const statusDiv = document.getElementById('user-account-status');
+            const loginBtn = document.getElementById('login-btn-header');
+            const nameSpan = document.getElementById('current-user-name');
+            const adminBtn = document.getElementById('admin-panel-btn');
+            const addLessonBtn = document.getElementById('add-lesson-btn');
+            const addServiceBtn = document.getElementById('add-service-btn');
+
+            if (currentUser) {
+                const badge = isSuperAdmin() ? ' 👑' : (hasAdminRights() ? ' 🛡️' : '');
+                nameSpan.innerText = `${currentUser.lastname} ${currentUser.firstname} (${currentUser.nickname})${badge}`;
+                statusDiv.classList.remove('hidden');
+                statusDiv.classList.add('flex');
+                loginBtn.classList.add('hidden');
+            } else {
+                statusDiv.classList.add('hidden');
+                statusDiv.classList.remove('flex');
+                loginBtn.classList.remove('hidden');
+            }
+
+            if (hasAdminRights()) {
+                adminBtn.classList.remove('hidden');
+                addLessonBtn.classList.remove('hidden');
+                addServiceBtn.classList.remove('hidden');
+            } else {
+                adminBtn.classList.add('hidden');
+                addLessonBtn.classList.add('hidden');
+                addServiceBtn.classList.add('hidden');
+            }
+        }
+
+        function openAdminPanel() {
+            if (!hasAdminRights()) return;
+            document.getElementById('admin-modal').classList.remove('hidden');
+            loadUsersForAdmin();
+        }
+
+        function closeAdminPanel() { document.getElementById('admin-modal').classList.add('hidden'); }
+
+        async function loadUsersForAdmin() {
+            const container = document.getElementById('admin-users-list');
+            container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Завантаження списку...</p>`;
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/users.json`);
+                const usersObj = await res.json() || {};
+                const usersArr = Object.values(usersObj);
+
+                if (usersArr.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Користувачів ще немає</p>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+                usersArr.forEach(u => {
+                    const isOwner = (u.nickname === SUPER_ADMIN_NICK);
+                    const isUserAdmin = isOwner || u.isAdmin === true;
+                    let controlsHTML = '';
+
+                    if (isOwner) {
+                        controlsHTML = `<span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800">👑 Головний адмін</span>`;
+                    } else if (isSuperAdmin()) {
+                        const toggleBtnText = isUserAdmin ? "Забрати права адміна" : "Видати права адміна";
+                        const toggleBtnClass = isUserAdmin ? "bg-slate-200 hover:bg-slate-300 text-slate-700" : "bg-blue-600 hover:bg-blue-700 text-white";
+                        controlsHTML = `
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="toggleUserAdmin('${u.nickname}', ${!isUserAdmin})" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${toggleBtnClass}">
+                                    ${toggleBtnText}
+                                </button>
+                                <button onclick="deleteUserAccount('${u.nickname}')" class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold cursor-pointer" title="Видалити акаунт">🗑️</button>
+                            </div>
+                        `;
+                    } else {
+                        controlsHTML = isUserAdmin ? `<span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700">🛡️ Адмін</span>` : `<span class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-500">Студент</span>`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-2xl border border-slate-200/80 bg-white gap-2";
+                    card.innerHTML = `
+                        <div>
+                            <div class="text-xs font-bold text-slate-900">${u.lastname} ${u.firstname} <span class="text-blue-600">(@${u.nickname})</span></div>
+                            <div class="text-[11px] text-slate-400">Роль: ${isOwner ? 'Власник порталу' : (isUserAdmin ? 'Адміністратор' : 'Студент')}</div>
+                        </div>
+                        <div>${controlsHTML}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                container.innerHTML = `<p class="text-xs text-rose-500 text-center py-4">Помилка завантаження користувачів</p>`;
+            }
+        }
+
+        async function toggleUserAdmin(nickname, makeAdmin) {
+            if (!isSuperAdmin()) return;
+            try {
+                await fetch(`${FIREBASE_DB_URL}/users/${nickname}/isAdmin.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(makeAdmin)
+                });
+                loadUsersForAdmin();
+            } catch (err) { showInfoModal("Не вдалося змінити права користувача."); }
+        }
+
+        function deleteUserAccount(nickname) {
+            if (!isSuperAdmin() || nickname === SUPER_ADMIN_NICK) return;
+            openConfirmModal(`Видалити акаунт користувача @${nickname}?`, async function() {
+                try {
+                    await fetch(`${FIREBASE_DB_URL}/users/${nickname}.json`, { method: 'DELETE' });
+                    loadUsersForAdmin();
+                } catch (err) { showInfoModal("Помилка при видаленні акаунта."); }
+            });
+        }
+
+        function adminClearAttendance() {
+            if (!hasAdminRights()) return;
+            openConfirmModal("Очистити всі списки відмічених на парах?", async function() {
+                attendanceData = {};
+                await saveCloudData();
+                renderAttendanceSection();
+                showInfoModal("Усі списки відвідуваності очищено! ✅");
+            });
+        }
+
+        let attendanceData = {};
+        let storedWeekId = getCurrentWeekId();
+
+        function handleAttendanceClick(dayIndex, lessonIndex, lessonName) {
+            const lesson = (scheduleData[dayIndex] || [])[lessonIndex];
+            if (!lesson) return;
+
+            const status = getLessonTimeStatus(dayIndex, lesson.time);
+            if (status !== 'active') {
+                showInfoModal("Відмітитися можна лише під час самої пари! Зараз доступ закритий.");
+                renderAttendanceSection();
+                return;
+            }
+
+            const lessonKey = `${dayIndex}_${lessonIndex}_${lessonName}`;
+            if (currentUser) {
+                addStudentToAttendance(lessonKey, currentUser.lastname, currentUser.firstname);
+            } else {
+                document.getElementById('manual-lesson-id').value = lessonKey;
+                document.getElementById('manual-day-idx').value = dayIndex;
+                document.getElementById('manual-lesson-idx').value = lessonIndex;
+                document.getElementById('manual-lastname').value = '';
+                document.getElementById('manual-firstname').value = '';
+                document.getElementById('manual-attendance-modal').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('manual-attendance-form').onsubmit = function(e) {
+            e.preventDefault();
+            const lessonKey = document.getElementById('manual-lesson-id').value;
+            const dayIdx = parseInt(document.getElementById('manual-day-idx').value, 10);
+            const lessonIdx = parseInt(document.getElementById('manual-lesson-idx').value, 10);
+            const lastname = document.getElementById('manual-lastname').value.trim();
+            const firstname = document.getElementById('manual-firstname').value.trim();
+
+            const lesson = (scheduleData[dayIdx] || [])[lessonIdx];
+            if (!lesson || getLessonTimeStatus(dayIdx, lesson.time) !== 'active') {
+                closeManualModal();
+                showInfoModal("Час пари вже вийшов! Відмітитися більше не можна.");
+                renderAttendanceSection();
+                return;
+            }
+
+            if (lastname && firstname) {
+                addStudentToAttendance(lessonKey, lastname, firstname);
+                closeManualModal();
+            }
+        };
+
+        function closeManualModal() { document.getElementById('manual-attendance-modal').classList.add('hidden'); }
+
+        async function addStudentToAttendance(lessonKey, lastname, firstname) {
+            if (!attendanceData[lessonKey]) attendanceData[lessonKey] = [];
+            const exists = attendanceData[lessonKey].some(
+                s => s.lastname.toLowerCase() === lastname.toLowerCase() && s.firstname.toLowerCase() === firstname.toLowerCase()
+            );
+            if (!exists) {
+                const nowTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+                attendanceData[lessonKey].push({ lastname, firstname, time: nowTime });
+                await saveCloudData();
+                renderAttendanceSection();
+                showInfoModal(`Ви успішно відмітилися на парі як ${lastname} ${firstname}! ✅`);
+            } else {
+                showInfoModal("Ви вже відмітилися на цій парі раніше!");
+            }
+        }
+
+        function openAttendanceList(lessonKey, lessonName) {
+            const students = attendanceData[lessonKey] || [];
+            document.getElementById('attendance-modal-subtitle').innerText = lessonName;
+            const container = document.getElementById('attendance-names-list');
+            container.innerHTML = '';
+
+            if (students.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Ще ніхто не відмітився</p>`;
+            } else {
+                students.forEach((st, idx) => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-700";
+                    const timeBadge = st.time ? `<span class="text-slate-400 font-normal ml-1">(${st.time})</span>` : '';
+                    row.innerHTML = `<span>${idx + 1}. ${st.lastname} ${st.firstname}${timeBadge}</span> <span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Присутній</span>`;
+                    container.appendChild(row);
+                });
+            }
+            document.getElementById('attendance-list-modal').classList.remove('hidden');
+        }
+
+        function closeAttendanceListModal() { document.getElementById('attendance-list-modal').classList.add('hidden'); }
+
+        function openConfirmModal(message, onConfirm) {
+            document.getElementById('confirm-text').innerText = message;
+            confirmCallback = onConfirm;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() { document.getElementById('confirm-modal').classList.add('hidden'); confirmCallback = null; }
+
+        document.getElementById('confirm-yes-btn').onclick = function() {
+            const cb = confirmCallback;
+            closeConfirmModal();
+            if (cb) cb();
+        };
+
+        window.copyLink = function(btn, link) {
+            navigator.clipboard.writeText(link).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = "✅";
+                setTimeout(() => btn.innerHTML = originalHTML, 1500);
+            });
+        };
+
+        const defaultSchedule = {
+            1: [
+                { time: "8:30", name: "Вступ до фаху та академічна доброчесність", room: "202 к.11", type: "Теорія", teacher: "Братішко В.В.", link: "https://nubip-edu-ua.zoom.us/j/84612481219?pwd=5HaqncbCnSEzrzgfsbpYJcrAa3bx4Z.1" },
+                { time: "10:10", name: "Вища та прикладна математика", room: "136 к.11", type: "Теорія", teacher: "Ляшенко Я.Г.", link: "https://meet.google.com/wur-dbik-bfp?authuser=0" },
+                { time: "11:50", name: "Інформаційні технології у логістиці", room: "213 к.11", type: "Лекція", teacher: "Савченко Л.А.", link: "https://us05web.zoom.us/j/3574132092?pwd=5YdDKVIlNCSVHhxo1W7l4i9vjo4EG4" },
+                { time: "13:30", name: "Транспортні засоби", room: "213 к.11", type: "Лекція", teacher: "Степанович О.В.", link: "https://meet.google.com/yha-bwgx-pcz?authuser=0" }
+            ],
+            2: [
+                { time: "8:30", name: "Вища та прикладна математика", room: "340 к.11", type: "Практика", teacher: "Сокульський О.Є.", link: "https://us02web.zoom.us/j/7184875624?pwd=VlM1eGhaWC8zREQrK0pTQklOSFVMQT09" },
+                { time: "10:10", name: "Українська мова за професійним спрямуванням", room: "205 к.11", type: "Практичні", teacher: "Бурмак А.С.", link: "https://us05web.zoom.us/j/88382807163?pwd=46nIJFZK8N3nf0gQSu6zYPhjv5lElc.1" },
+                { time: "11:50", name: "Фізичне виховання", room: "Спортзал", type: "Практика", teacher: "Вербицький С.О.", link: "https://us05web.zoom.us/j/88546081172?pwd=qCAxORGgdeNWxZuq4PBz5D9aLGqOb5.1" }
+            ],
+            3: [
+                { time: "8:30", name: "Інформаційні технології у логістиці", room: "308 к.11", type: "Лабораторна", teacher: "Савченко Л.А.", link: "https://us05web.zoom.us/j/3574132092?pwd=5YdDKVIlNCSVHhxo1W7l4i9vjo4EG4" },
+                { time: "10:10", name: "Українська мова за професійним спрямуванням", room: "202 к.11", type: "Лекції", teacher: "Пузаренко Я.В.", link: "https://nubip-edu-ua.zoom.us/j/88087020172?pwd=0LPbN6pREGeiIR8nMLslLiPNnF6NPR.1" }
+            ],
+            4: [
+                { time: "8:30", name: "Іноземна мова", room: "103 к.7а", type: "Практика", teacher: "Сорокіна Т.М.", link: "https://us04web.zoom.us/j/2911358429?pwd=S253Sk9ZZE9kZnBHRWlsM0Ewck9Sdz09&omn=75803018282" },
+                { time: "10:10", name: "Вступ до фаху", room: "360 к.11", type: "Практика", teacher: "Колєснік І.В.", link: "https://meet.google.com/gca-qkmf-mqe" },
+                { time: "11:50", name: "Економічна теорія", room: "136 к.111", type: "Теорія", teacher: "Василенко Пащенко О.", link: "https://us04web.zoom.us/j/77858706047?pwd=j6zAVetekp3xo9RadjyjE0anXoaRJC.1" },
+                { time: "13:30", name: "Ділова комунікація", room: "136 к.11", type: "Семінар", teacher: "Головата Н.А.", link: "https://meet.google.com/zou-xgnh-qbq" }
+            ],
+            5: [
+                { time: "8:30", name: "Економічна теорія", room: "317 к.11", type: "Практика", teacher: "Гуща І.О.", link: "https://us04web.zoom.us/j/2714476168?pwd=ZE05UDRVN3ZySmpxcXFYMnlIWXRJUT09" },
+                { time: "10:10", name: "Транспортні засоби", room: "205 к.11", type: "Лекція", teacher: "Степанович О.В.", link: "https://meet.google.com/yha-bwgx-pcz?authuser=0" },
+                { time: "11:50", name: "Ділова комунікація", room: "354 к.11", type: "Лекція", teacher: "Головата Н.А.", link: "https://meet.google.com/zou-xgnh-qbq" }
+            ]
+        };
+
+        const defaultServices = [
+            { name: "Google Classroom", desc: "Завдання та матеріали", icon: "🎓", link: "https://classroom.google.com" },
+            { name: "E-Learn NUBIP", desc: "Успішність та бали", icon: "💻", link: "https://elearn.nubip.edu.ua" },
+            { name: "Пошта", desc: "Outlook та листи", icon: "✉️", link: "https://outlook.office.com" },
+            { name: "Telegram чат", desc: "Оголошення групи", icon: "💬", link: "https://t.me" }
+        ];
+
+        let scheduleData = defaultSchedule;
+        let servicesData = defaultServices;
+        let tasks = [];
+
+        async function loadCloudData() {
+            const statusBadge = document.getElementById('sync-status');
+            const currentWeek = getCurrentWeekId();
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/portalData.json`);
+                const data = await res.json();
+                if (data) {
+                    if (data.schedule) scheduleData = data.schedule;
+                    if (data.services) servicesData = data.services;
+                    if (data.tasks) tasks = data.tasks;
+
+                    if (data.attendanceWeekId === currentWeek) {
+                        attendanceData = data.attendance || {};
+                        storedWeekId = currentWeek;
+                    } else {
+                        attendanceData = {};
+                        storedWeekId = currentWeek;
+                        await saveCloudData();
+                    }
+                } else {
+                    storedWeekId = currentWeek;
+                    await saveCloudData();
+                }
+                statusBadge.innerText = "🟢 Синхронізовано";
+                statusBadge.className = "px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60";
+            } catch (err) {
+                statusBadge.innerText = "🔴 Помилка мережі";
+                statusBadge.className = "px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60";
+            }
+            renderAll();
+            syncCurrentUserRights();
+        }
+
+        async function saveCloudData() {
+            const statusBadge = document.getElementById('sync-status');
+            statusBadge.innerText = "⏳ Збереження...";
+            try {
+                await fetch(`${FIREBASE_DB_URL}/portalData.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        schedule: scheduleData,
+                        services: servicesData,
+                        tasks: tasks,
+                        attendance: attendanceData,
+                        attendanceWeekId: storedWeekId
+                    })
+                });
+                statusBadge.innerText = "🟢 Оновлено для всіх";
+                statusBadge.className = "px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60";
+            } catch (err) {
+                statusBadge.innerText = "🔴 Помилка збереження";
+                statusBadge.className = "px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60";
+            }
+        }
+
+        function renderAll() {
+            updateUserUI();
+            renderTabs();
+            renderSchedule();
+            renderAttendanceSection();
+            renderServices();
+            renderTasks();
+        }
+
+        const daysNames = { 1: "Понеділок", 2: "Вівторок", 3: "Середа", 4: "Четвер", 5: "П'ятниця" };
+        let currentDay = new Date().getDay();
+        if (currentDay === 0 || currentDay === 6) currentDay = 1;
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('live-datetime').innerText = now.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) + ' — ' + now.toLocaleTimeString('uk-UA');
+        }
+        setInterval(updateDateTime, 1000);
+        setInterval(renderAttendanceSection, 30000);
+        updateDateTime();
+
+        function updateWeekBadge() {
+            const d = new Date();
+            const startOfYear = new Date(d.getFullYear(), 0, 1);
+            const weekNumber = Math.ceil((((d - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+            document.getElementById('week-badge').innerText = weekNumber % 2 === 0 ? "📌 Чисельник" : "📌 Знаменник";
+        }
+        updateWeekBadge();
+
+        function renderTabs() {
+            const container = document.getElementById('days-tabs');
+            container.innerHTML = '';
+            for (let day = 1; day <= 5; day++) {
+                const btn = document.createElement('button');
+                btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${currentDay === day ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-200/60'}`;
+                btn.innerText = daysNames[day];
+                btn.onclick = () => { currentDay = day; renderTabs(); renderSchedule(); renderAttendanceSection(); };
+                container.appendChild(btn);
+            }
+        }
+
+        function renderSchedule() {
+            const container = document.getElementById('schedule-container');
+            container.innerHTML = '';
+            const dayLessons = scheduleData[currentDay] || [];
+            const canEdit = hasAdminRights();
+
+            if (dayLessons.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 font-medium text-sm">Сьогодні пар немає 🎉</div>`;
+                return;
+            }
+
+            dayLessons.forEach((lesson, index) => {
+                const adminButtons = canEdit ? `
+                    <button onclick="checkAdminAndDo(() => editLesson(${currentDay}, ${index}))" class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer rounded-lg hover:bg-slate-100" title="Редагувати">✏️</button>
+                    <button onclick="checkAdminAndDo(() => deleteLesson(${currentDay}, ${index}))" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer rounded-lg hover:bg-rose-50 font-bold" title="Видалити">×</button>
+                ` : '';
+
+                const card = document.createElement('div');
+                card.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-2xl border border-slate-100 bg-white/60 hover:bg-blue-50/20 hover:border-blue-200/60 transition-all gap-3 shadow-2xs";
+                card.innerHTML = `
+                    <div class="flex items-start space-x-3.5">
+                        <div class="bg-blue-50 text-blue-700 font-extrabold px-3 py-2 rounded-xl text-xs shrink-0 border border-blue-100/60">${lesson.time}</div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">${lesson.name}</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">Викладач: <span class="font-semibold text-slate-700">${lesson.teacher}</span> • Аудиторія: <span class="font-semibold text-slate-700">${lesson.room}</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                        <span class="text-[11px] font-bold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg mr-0.5">${lesson.type}</span>
+                        <button onclick="copyLink(this, '${lesson.link}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 cursor-pointer active:scale-95" title="Скопіювати посилання">📋</button>
+                        <a href="${lesson.link}" target="_blank" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1 active:scale-95">Підключитись</a>
+                        ${adminButtons}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderAttendanceSection() {
+            const container = document.getElementById('attendance-section');
+            container.innerHTML = '';
+            const dayLessons = scheduleData[currentDay] || [];
+
+            if (dayLessons.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">У цей день немає пар для відмітки</p>`;
+                return;
+            }
+
+            dayLessons.forEach((lesson, index) => {
+                const lessonKey = `${currentDay}_${index}_${lesson.name}`;
+                const count = attendanceData[lessonKey] ? attendanceData[lessonKey].length : 0;
+                const status = getLessonTimeStatus(currentDay, lesson.time);
+
+                let actionButtonHTML = '';
+                if (status === 'active') {
+                    actionButtonHTML = `
+                        <button onclick="handleAttendanceClick(${currentDay}, ${index}, '${lesson.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95">
+                            ✅ Відмітитися
+                        </button>
+                    `;
+                } else if (status === 'upcoming') {
+                    actionButtonHTML = `
+                        <button disabled class="px-3.5 py-2 bg-amber-50 text-amber-700 border border-amber-200/70 rounded-xl text-xs font-bold cursor-not-allowed opacity-80">
+                            ⏳ Ще не почалась
+                        </button>
+                    `;
+                } else {
+                    actionButtonHTML = `
+                        <button disabled class="px-3.5 py-2 bg-slate-100 text-slate-400 border border-slate-200/70 rounded-xl text-xs font-bold cursor-not-allowed">
+                            🔒 Доступ закрито
+                        </button>
+                    `;
+                }
+
+                const item = document.createElement('div');
+                item.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white transition-all gap-3";
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">${lesson.time}</span>
+                            <h4 class="text-sm font-bold text-slate-800">${lesson.name}</h4>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">Відмітилось студентів: <strong class="text-slate-700">${count}</strong></p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        ${actionButtonHTML}
+                        <button onclick="openAttendanceList('${lessonKey}', '${lesson.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                            📋 Список (${count})
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderServices() {
+            const container = document.getElementById('services-container');
+            container.innerHTML = '';
+            const canEdit = hasAdminRights();
+
+            servicesData.forEach((service, index) => {
+                const adminButtons = canEdit ? `
+                    <div class="flex items-center gap-1.5 shrink-0 ml-2 z-10">
+                        <button onclick="event.stopPropagation(); checkAdminAndDo(() => editService(${index}))" class="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer rounded-lg hover:bg-indigo-50" title="Редагувати">✏️</button>
+                        <button onclick="event.stopPropagation(); checkAdminAndDo(() => deleteService(${index}))" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer rounded-lg hover:bg-rose-50 font-bold text-sm" title="Видалити">×</button>
+                    </div>
+                ` : '';
+
+                const card = document.createElement('div');
+                card.className = "p-3.5 rounded-2xl border border-slate-200/80 bg-white/70 hover:border-indigo-500 hover:bg-indigo-50/30 transition-all flex items-center justify-between group shadow-2xs";
+                card.innerHTML = `
+                    <a href="${service.link}" target="_blank" class="flex items-center space-x-3 overflow-hidden flex-grow cursor-pointer">
+                        <span class="text-2xl p-2 bg-indigo-50 rounded-xl shrink-0 group-hover:scale-110 transition-transform">${service.icon}</span>
+                        <div class="truncate">
+                            <h4 class="text-xs font-bold text-slate-800 group-hover:text-indigo-600 truncate">${service.name}</h4>
+                            <p class="text-[11px] text-slate-500 truncate">${service.desc}</p>
+                        </div>
+                    </a>
+                    ${adminButtons}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "Додати пару";
+            document.getElementById('edit-index').value = "";
+            document.getElementById('lesson-day').value = currentDay;
+            document.getElementById('lesson-time').value = "";
+            document.getElementById('lesson-type').value = "";
+            document.getElementById('lesson-name').value = "";
+            document.getElementById('lesson-teacher').value = "";
+            document.getElementById('lesson-room').value = "";
+            document.getElementById('lesson-link').value = "";
+            document.getElementById('lesson-modal').classList.remove('hidden');
+        }
+
+        function editLesson(day, index) {
+            const lesson = scheduleData[day][index];
+            document.getElementById('modal-title').innerText = "Редагувати пару";
+            document.getElementById('edit-index').value = index;
+            document.getElementById('lesson-day').value = day;
+            document.getElementById('lesson-time').value = lesson.time;
+            document.getElementById('lesson-type').value = lesson.type;
+            document.getElementById('lesson-name').value = lesson.name;
+            document.getElementById('lesson-teacher').value = lesson.teacher;
+            document.getElementById('lesson-room').value = lesson.room;
+            document.getElementById('lesson-link').value = lesson.link;
+            document.getElementById('lesson-modal').classList.remove('hidden');
+        }
+
+        function closeAddModal() { document.getElementById('lesson-modal').classList.add('hidden'); }
+
+        function deleteLesson(day, index) {
+            openConfirmModal("Видалити цю пару для всіх?", function() {
+                scheduleData[day].splice(index, 1);
+                saveCloudData();
+                renderSchedule();
+                renderAttendanceSection();
+            });
+        }
+
+        document.getElementById('lesson-form').onsubmit = function(e) {
+            e.preventDefault();
+            if (!hasAdminRights()) return;
+            const day = document.getElementById('lesson-day').value;
+            const editIndex = document.getElementById('edit-index').value;
+            const newLesson = {
+                time: document.getElementById('lesson-time').value,
+                type: document.getElementById('lesson-type').value,
+                name: document.getElementById('lesson-name').value,
+                teacher: document.getElementById('lesson-teacher').value,
+                room: document.getElementById('lesson-room').value,
+                link: document.getElementById('lesson-link').value
+            };
+            if (!scheduleData[day]) scheduleData[day] = [];
+            if (editIndex !== "") scheduleData[day][editIndex] = newLesson;
+            else scheduleData[day].push(newLesson);
+            saveCloudData();
+            closeAddModal();
+            currentDay = parseInt(day);
+            renderTabs();
+            renderSchedule();
+            renderAttendanceSection();
+        }
+
+        function openServiceModal() {
+            document.getElementById('service-modal-title').innerText = "Додати сервіс";
+            document.getElementById('service-edit-index').value = "";
+            document.getElementById('service-name').value = "";
+            document.getElementById('service-desc').value = "";
+            document.getElementById('service-icon').value = "🔗";
+            document.getElementById('service-link').value = "";
+            document.getElementById('service-modal').classList.remove('hidden');
+        }
+
+        function editService(index) {
+            const s = servicesData[index];
+            document.getElementById('service-modal-title').innerText = "Редагувати сервіс";
+            document.getElementById('service-edit-index').value = index;
+            document.getElementById('service-name').value = s.name;
+            document.getElementById('service-desc').value = s.desc;
+            document.getElementById('service-icon').value = s.icon;
+            document.getElementById('service-link').value = s.link;
+            document.getElementById('service-modal').classList.remove('hidden');
+        }
+
+        function closeServiceModal() { document.getElementById('service-modal').classList.add('hidden'); }
+
+        function deleteService(index) {
+            openConfirmModal("Видалити цей сервіс для всіх?", function() {
+                servicesData.splice(index, 1);
+                saveCloudData();
+                renderServices();
+            });
+        }
+
+        document.getElementById('service-form').onsubmit = function(e) {
+            e.preventDefault();
+            if (!hasAdminRights()) return;
+            const editIndex = document.getElementById('service-edit-index').value;
+            const newService = {
+                name: document.getElementById('service-name').value,
+                desc: document.getElementById('service-desc').value,
+                icon: document.getElementById('service-icon').value,
+                link: document.getElementById('service-link').value
+            };
+            if (editIndex !== "") servicesData[editIndex] = newService;
+            else servicesData.push(newService);
+            saveCloudData();
+            closeServiceModal();
+            renderServices();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-list');
+            container.innerHTML = '';
+            if (tasks.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Немає активних завдань</p>`;
+                return;
+            }
+            tasks.forEach(task => {
+                const authorBadge = task.author ? `<span class="text-[10px] text-slate-400 block mt-0.5">Додав: ${task.author}</span>` : '';
+                const controls = currentUser ? `
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4 shrink-0">
+                ` : `<span class="text-xs">${task.completed ? '✅' : '📌'}</span>`;
+
+                const deleteBtn = currentUser ? `
+                    <button onclick="deleteTask(${task.id})" class="text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded-md hover:bg-rose-50 transition-colors cursor-pointer">×</button>
+                ` : '';
+
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-3 rounded-2xl border text-xs transition-all ${task.completed ? 'bg-slate-50 border-slate-200/60 text-slate-400 line-through' : 'bg-white border-slate-200/80 text-slate-700 shadow-2xs'}`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        ${controls}
+                        <div class="truncate">
+                            <span class="font-semibold block truncate">${task.text}</span>
+                            ${authorBadge}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-2">
+                        <span class="text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">${task.date}</span>
+                        ${deleteBtn}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function toggleTask(id) {
+            if (!currentUser) { openAuthModal(); return; }
+            tasks = tasks.map(t => t.id === id ? {...t, completed: !t.completed} : t);
+            saveCloudData();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            if (!currentUser) { openAuthModal(); return; }
+            tasks = tasks.filter(t => t.id !== id);
+            saveCloudData();
+            renderTasks();
+        }
+
+        document.getElementById('task-form').onsubmit = function(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                showInfoModal("Щоб додати домашнє завдання, увійдіть у свій акаунт!");
+                openAuthModal();
+                return;
+            }
+            const textInput = document.getElementById('task-text');
+            const dateInput = document.getElementById('task-date');
+            if (!textInput.value.trim() || !dateInput.value) return;
+
+            tasks.push({
+                id: Date.now(),
+                text: textInput.value.trim(),
+                date: dateInput.value,
+                completed: false,
+                author: `${currentUser.lastname} ${currentUser.firstname}`
+            });
+            textInput.value = '';
+            dateInput.value = '';
+            saveCloudData();
+            renderTasks();
+        }
+
+        // Початковий запуск одразу після завантаження скрипта
+        updateUserUI();
+        loadCloudData();
+    </script>
+</body>
+</html>
